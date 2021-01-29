@@ -46,6 +46,59 @@ def save_thank_you_letter(id, form_letter)
   end
 end
 
+def log_time_occurrence(time)
+  if @time_occurrences.nil?
+    @time_occurrences = Hash.new
+  end
+  if @time_occurrences[time].nil?
+    @time_occurrences[time] = 1
+  else
+    @time_occurrences[time] += 1
+  end
+end
+
+def log_day_occurrence(day)
+  if @day_occurrences.nil?
+    @day_occurrences = Hash.new
+  end
+  if @day_occurrences[day].nil?
+    @day_occurrences[day] = 1
+  else
+    @day_occurrences[day] += 1
+  end
+end
+
+def find_most_frequent(hash)
+  most_common = [0, 0]
+  hash.each do |key, value|
+    if value > most_common[1]
+      most_common = [key, value]
+    end
+  end
+  most_common[0]
+end
+
+def int_to_day(i)
+  case i
+  when 1
+    "Monday"
+  when 2
+    "Tuesday"
+  when 3
+    "Wednesday"
+  when 4
+    "Thursday"
+  when 5
+    "Friday"
+  when 6
+    "Saturday"
+  when 7
+    "Sunday"
+  else
+    "OOPS!-day"
+  end
+end
+
 puts 'Event Manager Initialized!'
 
 contents = CSV.open(
@@ -62,6 +115,7 @@ contents.each do |row|
   name = row[:first_name]
   zipcode = clean_zipcode(row[:zipcode])
   phone_number = clean_phone_number(row[:homephone])
+  registration_time = DateTime.strptime(row[:regdate], '%m/%d/%y %H:%M')
 
   legislators = legislators_by_zipcode(zipcode)
 
@@ -69,6 +123,14 @@ contents.each do |row|
 
   save_thank_you_letter(id, form_letter)
 
-  puts "#{name} #{zipcode} #{phone_number}"
+  puts "#{registration_time} #{name} #{zipcode} #{phone_number}"
+
+  log_time_occurrence(registration_time.hour)
+  log_day_occurrence(registration_time.cwday)
+end
+
+unless @time_occurrences.nil?
+  puts "The most common hour to register is #{find_most_frequent(@time_occurrences)}:00."
+  puts "The most common day to register is #{int_to_day(find_most_frequent(@day_occurrences))}."
 end
 
